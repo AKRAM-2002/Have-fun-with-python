@@ -99,6 +99,8 @@ def update():
 @app.command()
 def complete(position: int):
     typer.echo(f"Completing task at position {position}")
+    todos[position - 1]['Status'] = 'Done'
+    save_todos()
     show()
 
 
