@@ -1,1 +1,1 @@
-# Have-fun-with-python
+# Fun and useful projects with Python
