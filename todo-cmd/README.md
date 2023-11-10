@@ -30,7 +30,7 @@ Todocli is a simple command-line to-do list application built with Python, Typer
   pip install -r requirements.txt
  ```
 
-##Usage
+## Usage
 
 #### Add a new task:
 ```bash
