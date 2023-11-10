@@ -1,0 +1,22 @@
+{
+    "Learn": "cyan",
+    "Youtube": "red",
+    "Sports": "cyan",
+    "Study": "green",
+    "Work": "yellow",
+    "Shopping": "blue",
+    "Health": "magenta",
+    "Entertainment": "purple",
+    "Home": "orange",
+    "Hobbies": "teal",
+    "Travel": "brown",
+    "Reading": "pink",
+    "Writing": "indigo",
+    "Coding": "lime",
+    "Cooking": "amber",
+    "Music": "deep_purple",
+    "Movies": "deep_orange",
+    "Art": "light_blue",
+    "Gaming": "light_green"
+  }
+  

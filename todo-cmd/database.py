@@ -62,17 +62,6 @@ def change_position(old_position: int, new_position:int, commit=True):
         conn.commit()
 
 
-def update_todo()
-
-
-
-
-
-
-
-
-
-
 
 
 

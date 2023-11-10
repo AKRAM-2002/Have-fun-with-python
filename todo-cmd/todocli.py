@@ -1,88 +1,111 @@
 import typer
 from rich.console import Console
 from rich.table import Table
-import json 
+import json
 import os
+from model import Todo
+from typing import Optional
 
 
 console = Console()
-
 app = typer.Typer()
 
-#let's store the todos in  a JSON file 
+
 TODO_FILE = "todos.json"
-# Initialize the todos list from the JSON file
+CATEGORY_COLORS_FILE = "category_colors.json"
 todos = []
+category_colors = {}  
+
 
 
 if os.path.exists(TODO_FILE) and os.path.getsize(TODO_FILE) > 0:
     try:
         with open(TODO_FILE, "r") as file:
-            todos = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+            todos = json.load(file) #Load from JSON FILE
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        console.print(f"Error loading todos: {e}", style="bold red")
+
+if os.path.exists(CATEGORY_COLORS_FILE) and os.path.getsize(CATEGORY_COLORS_FILE) > 0:
+    try:
+        with open(CATEGORY_COLORS_FILE, "r") as file:
+            category_colors = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        console.print(f"Error loading category colors: {e}", style="bold red")
 
 
+#Save todos in json file
+def save_todos():
+    try:
+        with open(TODO_FILE, "w") as file:
+            json.dump(todos, file)
+        console.print("Todos saved successfully.", style="bold green")
+    except Exception as e:
+        console.print(f"Error saving todos: {e}", style="bold red")
+
+
+#Get User Input
+def get_task_info():
+    task = typer.prompt("Enter the task:")
+    category = typer.prompt("Enter the category:")
+    return task, category
+
+
+#add function that save the todos entered by the user
 @app.command(short_help='adds an item')
-def add(task: str, category: str):
-    typer.echo(f"adding {task}, {category}")
+def add():
+    typer.echo("Adding a new task:")
+    task, category = get_task_info()
     todos.append({"Todo": task, "Category": category, "Status": "Not Yet"})
-
-    # Save the updated todos list to the JSON file
-    with open(TODO_FILE, "a") as file:
-        json.dump(todos, file)
-    
-    
+    save_todos()
 
 
+#Remove todo that the user requested to delete
 @app.command()
-def delete(category: str = None, task: str = None):
+def delete(category: Optional[str] = None, task: Optional[str] = None):
     global todos
-    
-    if category and task:
-        typer.echo(f"deleting task '{task}' in the category: {category}")
-        todos = [todo for todo in todos if not (todo["Category"] == category and todo["Todo"] == task)]
-    elif category:
-        typer.echo(f"deleting all tasks in the category: {category}")
-        todos = [todo for todo in todos if not (todo["Category"] == category)]
-    elif task:
-        typer.echo(f"deleting task: {task}")
-        todos = [todo for todo in todos if not (todo["Todo"] == task)]
-    else:
+
+    if not category and not task:
         typer.echo("Please provide either a category or a task to delete.")
+        return
 
-    # Save the updated todos list to the JSON file
-    with open(TODO_FILE, "w") as file:
-        json.dump(todos, file)
+    if not category:
+        category = typer.prompt("Enter the category:")
+
+    if not task:
+        task = typer.prompt("Enter the task:")
+
+    typer.echo(f"Deleting task '{task}' in the category: {category}")
+    todos = [todo for todo in todos if not (todo["Category"] == category and todo["Todo"] == task)]
+    save_todos()
 
 
-
-
-
+#Change the status of your todo list(Done or Undone)
 @app.command()
-def update(task: str, status: str):
-    typer.echo(f"updating task: {task} to status: {status}")
+def update():
+    typer.echo("Updating a task:")
+    task, category = get_task_info()
+    status = typer.prompt("Enter the new status (e.g., Done, Not Yet):")
+    
     for todo in todos:
-        if todo["Todo"] == task:
+        if todo["Todo"] == task and todo["Category"] == category:
             todo["Status"] = status
-            break
-    else:
-        typer.echo(f"Task '{task}' not found in your todos.")
+            typer.echo(f"Task '{task}' in category '{category}' updated to status: {status}")
+            save_todos()
+            return
 
-    # Save the updated todos list to the JSON file
-    with open(TODO_FILE, "w") as file:
-        json.dump(todos, file)
-
+    typer.echo(f"Task '{task}' in category '{category}' not found in your todos.")
 
 
 @app.command()
 def complete(position: int):
-    typer.echo(f"completing {position}")
+    typer.echo(f"Completing task at position {position}")
     show()
 
+
+
+#Displaying the list of todos by show command
 @app.command()
 def show():
-    #tasks = [{"Todo": "Todo1", "Category": "Study"}, {"Todo": "Todo2", "Category": "Sports"}]
     console.print("[bold magenta]Todos[/bold magenta]!", "***")
 
     table = Table(show_header=True, header_style="bold blue")
@@ -91,22 +114,16 @@ def show():
     table.add_column("Category", min_width=12, justify="right")
     table.add_column("Done", min_width=12, justify="right")
 
-    def get_category_color(category):
-        COLORS = {'Learn': 'cyan', 'Youtube': 'red', 'Sports': 'cyan', 'Study': 'green'}
-
-        if category in COLORS:
-            return COLORS[category]
-
-        return 'white'
-
     for i, todo in enumerate(todos, start=1):
         c = get_category_color(todo["Category"])
-        #is_done_str = 'Done' if True == 2 else 'Not Yet'
-        table.add_row(str(i), todo["Todo"], f'[{c}]{todo["Category"]}[/{c}]',todo['Status'] )
+        table.add_row(str(i), todo["Todo"], f'[{c}]{todo["Category"]}[/{c}]', todo['Status'])
 
     console.print(table)
 
 
+#Get the color specified for category
+def get_category_color(category):
+    return category_colors.get(category, 'white')
 
 
 if __name__ == "__main__":
